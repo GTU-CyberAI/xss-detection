@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>XSS Vulnerable Search Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        #search-box {
+            padding: 8px;
+            width: 300px;
+        }
+        #search-btn {
+            padding: 8px 15px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            min-height: 50px;
+            background-color: #f9f9f9;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Unprotected Search Page</h1>
+    <input type="text" id="search-box" placeholder="Search...">
+    <button id="search-btn">Search</button>
+    <div id="result">Results will appear here</div>
+
+    <script>
+        // Function to check if a string appears to be URL encoded
+        function isUrlEncoded(str) {
+            return str.includes('%') && decodeURIComponent(str) !== str;
+        }
+
+        document.getElementById('search-btn').addEventListener('click', function() {
+            let userInput = document.getElementById('search-box').value;
+            const resultDiv = document.getElementById('result');
+            let originalInput = userInput;
+            
+            // Show loading message
+            resultDiv.innerHTML = '<span class="loading">Processing...</span>';
+            
+            // Check if input is URL-encoded and decode it
+            let isEncoded = false;
+            if (isUrlEncoded(userInput)) {
+                try {
+                    originalInput = userInput;
+                    userInput = decodeURIComponent(userInput);
+                    isEncoded = true;
+                    console.log("Decoded input:", userInput);
+                } catch (e) {
+                    console.error("Error decoding URL:", e);
+                    // Keep original if decoding fails
+                }
+            }
+            
+            // Send to API
+            fetch('http://localhost:5000/check_xss', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ input: userInput })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response received:', data);
+                
+                // If XSS vulnerability is detected, ask for valid input
+                if (data.result.includes("XSS Vulnerability Found")) {
+                    resultDiv.innerHTML = "Enter valid input";
+                    <!-- resultDiv.innerHTML = userInput; -->
+                } else {
+                    // If safe, display the user input directly (still vulnerable to XSS)
+                    if (isEncoded) {
+                        resultDiv.innerHTML = "Search result (decoded): " + userInput;
+                    } else {
+                        resultDiv.innerHTML = "Search result: " + userInput;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = "Error: " + error.message;
+            });
+        });
+    </script>
+</body>
+</html>
