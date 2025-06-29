@@ -61,7 +61,11 @@ python3 server.py        # (on Ubuntu, if dependencies are compatible)
   - If both models say input is clean → input is shown in the UI.
 
 ---
-
+## Important Functions
+- From server.py, function check_xss(): This function is a web endpoint. When a user sends text, this function takes that text and prepares it for the machine learning models. It then uses two different models to predict if the text contains a dangerous XSS attack. Finally, it returns the results from both models.
+- From lstm.ipynb  function embedding_matrix(): This part of the code creates a special matrix. First, it trains a Word2Vec model to learn the meaning of words from the text data. Then, it uses these learned meanings to build an embedding_matrix. This matrix helps the main LSTM model understand the relationships between words, which improves its ability to detect attacks.
+- From transfromer.ipynb, function TransformerBlock.call(): This function is the main part of the Transformer model. It processes the input data in two steps. First, it uses "attention" (self.att) to focus on the most important words in the text. Second, it uses a simple neural network (self.ffn) to understand these words better. This process helps the model make a good prediction.
+ 
 ## Requirements
 
 For necessary versions, install required packages with:
